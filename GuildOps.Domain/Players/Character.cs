@@ -5,16 +5,18 @@ namespace GuildOps.Domain.Players;
 
 public sealed class Character
 {
-    public Character() { }
-    public Character(Guid id, Guid playerId, string server, string name, Guid characterClassId, int level)
+    private Character() { }
+
+    public Character(Guid playerId, Guid gameId, Guid characterClassId, string name, string server, int level = 1)
     {
         Id = Guid.CreateVersion7();
+        CreatedAt = DateTimeOffset.UtcNow;
         PlayerId = playerId;
-        Server = server;
-        Name = name;
+        GameId = gameId;
         CharacterClassId = characterClassId;
+        Name = name;
+        Server = server;
         Level = level;
-        CreatedAt = DateTime.UtcNow;
     }
 
     public Guid Id { get; private set; }

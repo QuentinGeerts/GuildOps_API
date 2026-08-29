@@ -2,7 +2,7 @@
 
 public class Game
 {
-    public Game() { }
+    private Game() { }
 
     public Game(string name, int maxLevel)
     {

@@ -34,11 +34,13 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 - Classes simples : **constructeur privé sans paramètre** (pour EF) + **constructeur public** qui génère l'`Id`
 - `Guid` en direct, généré par `Guid.CreateVersion7()` — **pas** d'identifiants typés, **pas** de value objects
 - `private set` sur `Id` et `CreatedAt` ; `{ get; set; }` public sur le reste
+- Toute entité porte un horodatage de création : `CreatedAt` — sauf `GuildMembership`, qui le nomme `JoinedAt`
 - `DateTimeOffset` pour toutes les dates, jamais `DateTime`
 - `null!` sur les chaînes obligatoires, `= []` sur les collections, `?` sur l'optionnel
 - Navigation inverse **uniquement** quand un écran charge le parent avec ses enfants — sinon la clé étrangère suffit
 - **Aucune validation dans les entités** : elle vit dans les handlers de la couche Application
 - Configuration EF par `IEntityTypeConfiguration<T>` — jamais d'attributs de mapping sur les entités
+- Les conventions globales vivent dans `ConfigureConventions` du DbContext ; la seule qui change quelque chose aujourd'hui est `HaveMaxLength(256)` sur les `string` — sans elle tout part en `nvarchar(max)`, non indexable
 - **Controllers MVC**, pas de Minimal API
 - Le DbContext s'appelle `ApplicationDbContext`
 - Un `DbSet` par racine d'agrégat uniquement (`Games`, `Players`, `Guilds`) — pas pour les entités enfants
@@ -58,6 +60,7 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Pas de dossier `src/`, pas de projet « sécurité » | structure volontairement plate |
 | Les grades appartiennent à la **guilde**, pas au jeu | chaque guilde a sa propre hiérarchie |
 | Les classes de personnage appartiennent au **jeu** | un personnage a une classe avant d'avoir une guilde |
+| Pas de `Color` sur `CharacterClass` ni sur `GuildRank` | retiré volontairement : la couleur est un choix d'affichage, il vivra côté Angular |
 
 ---
 
@@ -73,16 +76,18 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 | Fichier | Propriétés |
 |---|---|
 | `Games/Game.cs` | `Name`, `MaxLevel`, `CreatedAt`, `Classes` |
-| `Games/CharacterClass.cs` | `GameId`, `Name`, `Color`, `SortOrder` |
+| `Games/CharacterClass.cs` | `GameId`, `Name`, `SortOrder`, `CreatedAt` |
 | `Players/Player.cs` | `AccountName`, `CreatedAt`, `Characters` |
 | `Players/Character.cs` | `PlayerId`, `GameId`, `CharacterClassId`, `Name`, `Server`, `Level`, `CreatedAt`, `Membership` |
-| `Guilds/Guild.cs` | `GameId`, `Name`, `Server`, `Description`, `ChatUrl`, `CreatedAt`, `Ranks`, `Members` |
-| `Guilds/GuildRank.cs` | `GuildId`, `Name`, `SortOrder`, `Color`, `Permissions` (JSON), `IsLeader`, `IsDefault` |
+| `Guilds/Guild.cs` | `GameId`, `Name`, `Server`, `Description`, `ChatUrl`, `CreatedAt`, `Ranks`, `Memberships` |
+| `Guilds/GuildRank.cs` | `GuildId`, `Name`, `SortOrder`, `Permissions` (JSON), `IsLeader`, `IsDefault`, `CreatedAt` |
 | `Guilds/GuildMembership.cs` | `GuildId`, `CharacterId`, `GuildRankId`, `Note`, `JoinedAt` |
 | `Guilds/GuildPermission.cs` | enum : `ViewMembers`, `InviteMember`, `ReviewApplications`, `KickMember`, `AssignRank`, `ManageRanks`, `EditGuildProfile`, `WriteMemberNote` |
 
 `Description` sur `Guild` est la présentation de la guilde ; `ChatUrl` est le lien Discord.
 `Note` sur `GuildMembership` est une note libre sur le membre, rédigée par les gradés habilités.
+
+`Permissions` sur `GuildRank` est une `List<GuildPermission>` : EF Core 10 la mappe seul, sans configuration, en collection primitive — un tableau JSON d'entiers dans une colonne `nvarchar(max)`.
 
 ### Phase 2 — pas encore commencée
 
@@ -121,7 +126,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les 8 fichiers du Domain (phase 1) sont écrits.
 - `GuildOps.Application` ne contient qu'un `DependencyInjection.cs` — pas encore de dossier `Abstractions/`.
 - `GuildOps.Infrastructure` a `Persistence/ApplicationDbContext.cs` et un dossier `Persistence/Configurations/` vide.
-- `GuildOps.API` a un dossier `Controllers/` vide et un `Program.cs` par défaut.
+- `GuildOps.API` a un dossier `Controllers/` vide ; `Program.cs` compose les deux couches, expose Scalar sur `/docs`, sans authentification.
 - Aucune migration générée.
 
 ## Prochaine étape
