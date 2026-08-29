@@ -1,7 +1,13 @@
+using GuildOps.Application;
+using GuildOps.Infrastructure;
 using Microsoft.AspNetCore.Identity;
 using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -48,7 +54,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.MapGet("/", app.Environment.IsDevelopment() ? () => "GuildOps API is running in Development mode." : () => "GuildOps API is running.");
 
 app.Run();

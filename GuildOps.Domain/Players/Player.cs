@@ -2,22 +2,19 @@
 
 public sealed class Player
 {
-    private Player() { }   // requis par EF Core
+    private Player() { }
 
-    public Player(string pseudo, string email, string identityUserId)
+    public Player(string accountName)
     {
         Id = Guid.CreateVersion7();
-        Pseudo = pseudo;
-        Email = email;
-        IdentityUserId = identityUserId;
         CreatedAt = DateTime.UtcNow;
+        AccountName = accountName;
     }
 
-    public Guid Id { get; set; }
-    public string Pseudo { get; set; } = string.Empty;
-    public string Email { get; set; } = string.Empty;
-    public string IdentityUserId { get; set; } = string.Empty;
-    public DateTimeOffset CreatedAt { get; set; }
+    public Guid Id { get; private set; }
+    public DateTimeOffset CreatedAt { get; private set; }
+
+    public string AccountName { get; private set; } = null!;
 
     public ICollection<Character> Characters { get; set; } = [];
 }

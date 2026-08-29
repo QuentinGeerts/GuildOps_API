@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using GuildOps.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GuildOps.Infrastructure;
@@ -21,8 +23,10 @@ public static class DependencyInjection
 
     private static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        string connectionString = configuration.GetConnectionString("GuildOpsDatabase")
-            ?? throw new InvalidOperationException("Connection string 'GuildOpsDatabase' not found.");
+        string connectionString = configuration.GetConnectionString("Database")
+            ?? throw new InvalidOperationException("Connection string 'Database' not found.");
+
+        services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
         return services;
     }
 }

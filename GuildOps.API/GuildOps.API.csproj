@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Application\GuildOps.Application.csproj" />
+    <ProjectReference Include="..\GuildOps.Application\GuildOps.Application.csproj" />
     <ProjectReference Include="..\GuildOps.Infrastructure\GuildOps.Infrastructure.csproj" />
   </ItemGroup>
 

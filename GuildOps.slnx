@@ -1,5 +1,5 @@
 <Solution>
-  <Project Path="Application/GuildOps.Application.csproj" />
+  <Project Path="GuildOps.Application/GuildOps.Application.csproj" />
   <Project Path="GuildOps.API/GuildOps.API.csproj" />
   <Project Path="GuildOps.Domain/GuildOps.Domain.csproj" />
   <Project Path="GuildOps.Infrastructure/GuildOps.Infrastructure.csproj" />
