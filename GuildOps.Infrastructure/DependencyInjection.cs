@@ -1,4 +1,6 @@
-﻿using GuildOps.Infrastructure.Persistence;
+﻿using GuildOps.Application.Abstractions;
+using GuildOps.Infrastructure.Persistence;
+using GuildOps.Infrastructure.Persistence.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -12,7 +14,8 @@ public static class DependencyInjection
         ArgumentNullException.ThrowIfNull(configuration);
         return services
             .AddServices()
-            .AddPersistence(configuration);
+            .AddPersistence(configuration)
+            .AddRepositories();
     }
 
     private static IServiceCollection AddServices(this IServiceCollection services)
@@ -27,6 +30,13 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'Database' not found.");
 
         services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
+        services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<ApplicationDbContext>());
+        return services;
+    }
+
+    private static IServiceCollection AddRepositories(this IServiceCollection services)
+    {
+        services.AddScoped<IGameRepository, GameRepository>();
         return services;
     }
 }

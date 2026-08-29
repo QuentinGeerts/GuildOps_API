@@ -1,9 +1,17 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using GuildOps.Application.Abstractions;
+using GuildOps.Domain.Games;
+using GuildOps.Domain.Guilds;
+using GuildOps.Domain.Players;
+using Microsoft.EntityFrameworkCore;
 
 namespace GuildOps.Infrastructure.Persistence;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options)
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : DbContext(options), IUnitOfWork
 {
+    public DbSet<Game> Games => Set<Game>();
+    public DbSet<Player> Players => Set<Player>();
+    public DbSet<Guild> Guilds => Set<Guild>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
