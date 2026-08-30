@@ -41,6 +41,7 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 - Navigation inverse **uniquement** quand un écran charge le parent avec ses enfants — sinon la clé étrangère suffit
 - **Aucune validation dans les entités** : elle vit dans les handlers de la couche Application
 - Un handler par cas d'usage, implémentant `IQueryHandler<TQuery, TResult>` ou `ICommandHandler<TCommand[, TResult]>` ; enregistrement explicite dans le DI, pas de scan
+- Un test par branche du handler, et l'assertion `DidNotReceive().SaveChangesAsync(...)` sur chaque refus : un rejet qui écrirait quand même serait plus grave qu'un mauvais code HTTP
 - Configuration EF par `IEntityTypeConfiguration<T>` — jamais d'attributs de mapping sur les entités
 - Les conventions globales vivent dans `ConfigureConventions` du DbContext ; la seule qui change quelque chose aujourd'hui est `HaveMaxLength(256)` sur les `string` — sans elle tout part en `nvarchar(max)`, non indexable
 - Tout script SQL brut touchant `GuildRanks` doit poser `SET QUOTED_IDENTIFIER ON` (ou `sqlcmd -I`) : SQL Server l'exige pour toute écriture sur une table portant un index filtré. EF Core le fait déjà, c'est `sqlcmd` qui ne le fait pas par défaut.
@@ -181,7 +182,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
 - La gestion interne d'une guilde est en place : éditer le profil, attribuer un grade, annoter et exclure un membre — les quatre droits `EditGuildProfile`, `AssignRank`, `WriteMemberNote` et `KickMember` sont actifs, validés par 14 vérifications.
 - Recherche de guildes (jeu, serveur, nom, effectif), transfert de direction et départ volontaire sont en place — validés par 14 vérifications.
-- `GuildOps.UnitTests` couvre les handlers à règles fortes : 18 tests verts (`dotnet test`).
+- `GuildOps.UnitTests` couvre les 19 handlers porteurs de règles : **98 tests** verts en 81 ms (`dotnet test`). Les requêtes de simple projection ne sont pas testées — elles n'ont aucune branche.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
 - `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
@@ -190,9 +191,8 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Étendre la couverture aux handlers non encore testés (candidatures, invitations, rôles, disponibilités, inscription)
-2. Un front Angular — l'API couvre désormais tout le parcours
-3. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Un front Angular — l'API couvre désormais tout le parcours
+2. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
 Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, la gestion interne des guildes, la recherche, le transfert de direction et le départ volontaire.
 
