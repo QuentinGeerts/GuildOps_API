@@ -32,6 +32,13 @@ internal static class DatabaseSeeder
         ],
         ["Soutien", "Soigneur", "DPS"]),
 
+        ("The Elder Scrolls Online", 50,
+        [
+            "Chevalier-dragon", "Sorcier", "Lame noire", "Templier",
+            "Gardien", "Nécromancien", "Arcaniste"
+        ],
+        ["Tank", "Soigneur", "DPS"]),
+
         ("World of Warcraft", 80,
         [
             "Guerrier", "Paladin", "Chasseur", "Voleur", "Prêtre",

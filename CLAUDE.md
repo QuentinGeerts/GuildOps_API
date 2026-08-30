@@ -181,7 +181,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les 8 fichiers du Domain (phase 1) sont écrits.
 - `GuildOps.Application` a `Abstractions/` et les tranches `Games/`, `Players/`, `Guilds/` : 5 requêtes et 4 commandes.
 - `GuildOps.Infrastructure` a ses 8 configurations, `Persistence/Repositories/` (Game, Player, Guild), `Persistence/DatabaseSeeder.cs`, `Authentication/` (Argon2id, JWT, credentials).
-- La base est seedée au démarrage en Development : 4 jeux (Dofus, Final Fantasy XIV, Guild Wars 2, World of Warcraft), 63 classes et 15 rôles.
+- La base est seedée au démarrage en Development : 5 jeux (Dofus, Final Fantasy XIV, Guild Wars 2, The Elder Scrolls Online, World of Warcraft), 70 classes et 18 rôles.
 - Le flux candidature est complet : candidater, lister, accepter, refuser — validé par un scénario de 15 vérifications.
 - Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
 - Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
