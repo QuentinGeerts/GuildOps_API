@@ -21,6 +21,8 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetCharacterByIdQuery, CharacterDto?>, GetCharacterByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildByIdQuery, GuildDetailsDto?>, GetGuildByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildApplicationsQuery, GuildApplicationsResult>, GetGuildApplicationsQueryHandler>();
+        services.AddScoped<IQueryHandler<GetGuildInvitationsQuery, GuildInvitationsResult>, GetGuildInvitationsQueryHandler>();
+        services.AddScoped<IQueryHandler<GetPlayerInvitationsQuery, IReadOnlyList<PlayerInvitationDto>>, GetPlayerInvitationsQueryHandler>();
 
         services.AddScoped<ICommandHandler<RegisterPlayerCommand, RegisterPlayerResult>, RegisterPlayerCommandHandler>();
         services.AddScoped<ICommandHandler<LoginCommand, LoginResult>, LoginCommandHandler>();
@@ -29,6 +31,9 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<ApplyToGuildCommand, ApplyToGuildResult>, ApplyToGuildCommandHandler>();
         services.AddScoped<ICommandHandler<AcceptGuildApplicationCommand, AcceptGuildApplicationOutcome>, AcceptGuildApplicationCommandHandler>();
         services.AddScoped<ICommandHandler<RejectGuildApplicationCommand, RejectGuildApplicationOutcome>, RejectGuildApplicationCommandHandler>();
+        services.AddScoped<ICommandHandler<InviteCharacterCommand, InviteCharacterResult>, InviteCharacterCommandHandler>();
+        services.AddScoped<ICommandHandler<AcceptGuildInvitationCommand, AcceptGuildInvitationOutcome>, AcceptGuildInvitationCommandHandler>();
+        services.AddScoped<ICommandHandler<DeclineGuildInvitationCommand, DeclineGuildInvitationOutcome>, DeclineGuildInvitationCommandHandler>();
 
         return services;
     }

@@ -79,6 +79,8 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Grades socles à la création d'une guilde | `Chef de guilde` (tous droits, `IsLeader`), `Officier`, `Membre` (`IsDefault`) — définis dans `Application/Guilds/DefaultGuildRanks.cs` |
 | Pas de statut sur les candidatures ni les invitations | accepter crée l'adhésion et supprime la ligne, refuser la supprime — cohérent avec « aucun historique d'adhésion » |
 | Une invitation ne propose pas de grade | le nouveau membre reçoit le grade `IsDefault` de la guilde |
+| Les droits de guilde se vérifient par `IGuildRepository.HasPermissionAsync` | une requête traverse adhésion → personnage → grade pour répondre « ce joueur a-t-il ce droit dans cette guilde » |
+| Refuser une invitation accepte deux acteurs | l'invité décline, un gradé porteur de `InviteMember` annule — même route `DELETE`, même effet |
 | Seed par `UseSeeding` / `UseAsyncSeeding` | permet d'utiliser les constructeurs du Domain, contrairement à `HasData` qui exige des valeurs figées dans la migration |
 | Migration appliquée au démarrage, en Development seulement | `services.InitializeDatabaseAsync()` — c'est aussi ce qui déclenche le seed ; hors dev, la migration reste manuelle |
 | Une violation d'index unique devient un résultat, pas une exception HTTP | `ApplicationDbContext` traduit l'erreur SQL 2601/2627 en `UniqueConstraintException` (aucune dépendance SQL dans Application), le handler en fait un `Outcome`, le Controller un code HTTP |
@@ -156,6 +158,8 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - `GuildOps.Application` a `Abstractions/` et les tranches `Games/`, `Players/`, `Guilds/` : 5 requêtes et 4 commandes.
 - `GuildOps.Infrastructure` a ses 8 configurations, `Persistence/Repositories/` (Game, Player, Guild), `Persistence/DatabaseSeeder.cs`, `Authentication/` (Argon2id, JWT, credentials).
 - La base est seedée avec World of Warcraft et ses 13 classes au démarrage en Development.
+- Le flux candidature est complet : candidater, lister, accepter, refuser — validé par un scénario de 15 vérifications.
+- Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
 - `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
@@ -164,12 +168,10 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Générer la migration `AddGuildApplicationsAndInvitations` (les entités et leurs configurations sont écrites)
-2. Les cas d'usage : candidater, accepter, refuser, inviter, accepter/refuser une invitation
-3. Phase 2 : `GameRole`, `CharacterGameRole`, `Availability`
-4. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Phase 2 : `GameRole`, `CharacterGameRole`, `Availability`
+2. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
-Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures `/api/games`, `/api/games/{id}`, `/api/players/me`, `/api/characters/{id}`, `/api/guilds/{id}`.
+Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, et les flux candidature et invitation.
 
 ---
 

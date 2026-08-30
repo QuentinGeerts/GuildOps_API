@@ -29,4 +29,16 @@ public interface IGuildRepository
     void RemoveApplication(GuildApplication application);
 
     void AddMembership(GuildMembership membership);
+
+    Task<bool> InvitationExistsAsync(Guid guildId, Guid characterId, CancellationToken cancellationToken = default);
+
+    Task<GuildInvitation?> GetInvitationAsync(Guid guildId, Guid characterId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<GuildInvitation>> GetInvitationsAsync(Guid guildId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<GuildInvitation>> GetInvitationsForPlayerAsync(Guid playerId, CancellationToken cancellationToken = default);
+
+    void AddInvitation(GuildInvitation invitation);
+
+    void RemoveInvitation(GuildInvitation invitation);
 }

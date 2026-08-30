@@ -1,5 +1,6 @@
 ﻿using GuildOps.API.Extensions;
 using GuildOps.Application.Abstractions;
+using GuildOps.Application.Guilds;
 using GuildOps.Application.Players;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -45,4 +46,11 @@ public sealed class PlayersController : ControllerBase
         return player is null ? NotFound() : Ok(player);
     }
 
+
+    [HttpGet("me/invitations")]
+    [Authorize]
+    public Task<IReadOnlyList<PlayerInvitationDto>> GetMyInvitations(
+        [FromServices] IQueryHandler<GetPlayerInvitationsQuery, IReadOnlyList<PlayerInvitationDto>> getInvitations,
+        CancellationToken cancellationToken)
+        => getInvitations.HandleAsync(new GetPlayerInvitationsQuery(User.GetPlayerId()), cancellationToken);
 }

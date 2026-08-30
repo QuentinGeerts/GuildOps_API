@@ -72,4 +72,33 @@ internal sealed class GuildRepository(ApplicationDbContext context) : IGuildRepo
     public void RemoveApplication(GuildApplication application) => context.Set<GuildApplication>().Remove(application);
 
     public void AddMembership(GuildMembership membership) => context.Set<GuildMembership>().Add(membership);
+
+    public Task<bool> InvitationExistsAsync(Guid guildId, Guid characterId, CancellationToken cancellationToken = default)
+        => context.Set<GuildInvitation>()
+            .AnyAsync(invitation => invitation.GuildId == guildId && invitation.CharacterId == characterId, cancellationToken);
+
+    public Task<GuildInvitation?> GetInvitationAsync(Guid guildId, Guid characterId, CancellationToken cancellationToken = default)
+        => context.Set<GuildInvitation>()
+            .FirstOrDefaultAsync(invitation => invitation.GuildId == guildId && invitation.CharacterId == characterId, cancellationToken);
+
+    public async Task<IReadOnlyList<GuildInvitation>> GetInvitationsAsync(Guid guildId, CancellationToken cancellationToken = default)
+        => await context.Set<GuildInvitation>()
+            .AsNoTracking()
+            .Include(invitation => invitation.Character)
+            .Where(invitation => invitation.GuildId == guildId)
+            .OrderBy(invitation => invitation.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<GuildInvitation>> GetInvitationsForPlayerAsync(Guid playerId, CancellationToken cancellationToken = default)
+        => await context.Set<GuildInvitation>()
+            .AsNoTracking()
+            .Include(invitation => invitation.Character)
+            .Include(invitation => invitation.Guild)
+            .Where(invitation => invitation.Character!.PlayerId == playerId)
+            .OrderBy(invitation => invitation.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+    public void AddInvitation(GuildInvitation invitation) => context.Set<GuildInvitation>().Add(invitation);
+
+    public void RemoveInvitation(GuildInvitation invitation) => context.Set<GuildInvitation>().Remove(invitation);
 }

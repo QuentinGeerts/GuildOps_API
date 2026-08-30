@@ -170,4 +170,111 @@ public sealed class GuildsController : ControllerBase
             _ => NoContent()
         };
     }
+
+    [HttpPost("{guildId:guid}/invitations")]
+    public async Task<ActionResult<GuildInvitationDto>> Invite(
+        Guid guildId,
+        InviteCharacterRequest request,
+        [FromServices] ICommandHandler<InviteCharacterCommand, InviteCharacterResult> invite,
+        CancellationToken cancellationToken)
+    {
+        var result = await invite.HandleAsync(InviteCharacterCommand.From(User.GetPlayerId(), guildId, request), cancellationToken);
+
+        return result.Outcome switch
+        {
+            InviteCharacterOutcome.Forbidden => Problem(
+                detail: "Vous n'avez pas le droit d'inviter dans cette guilde.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            InviteCharacterOutcome.GuildNotFound => Problem(
+                detail: "Cette guilde n'existe pas.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            InviteCharacterOutcome.CharacterNotFound => Problem(
+                detail: "Ce personnage n'existe pas.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            InviteCharacterOutcome.DifferentGameOrServer => Problem(
+                detail: "Ce personnage n'est pas sur le meme jeu ou le meme serveur que la guilde.",
+                statusCode: StatusCodes.Status400BadRequest),
+
+            InviteCharacterOutcome.CharacterAlreadyInGuild => Problem(
+                detail: "Ce personnage appartient deja a une guilde.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            InviteCharacterOutcome.AlreadyInvited => Problem(
+                detail: "Une invitation est deja en cours pour ce personnage.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            _ => Created($"/api/guilds/{guildId}/invitations", result.Invitation)
+        };
+    }
+
+    [HttpGet("{guildId:guid}/invitations")]
+    public async Task<ActionResult<IReadOnlyList<GuildInvitationDto>>> GetInvitations(
+        Guid guildId,
+        [FromServices] IQueryHandler<GetGuildInvitationsQuery, GuildInvitationsResult> getInvitations,
+        CancellationToken cancellationToken)
+    {
+        var result = await getInvitations.HandleAsync(new GetGuildInvitationsQuery(User.GetPlayerId(), guildId), cancellationToken);
+
+        return result.Outcome == GuildInvitationsOutcome.Forbidden
+            ? Problem(detail: "Vous n'avez pas le droit d'inviter dans cette guilde.",
+                      statusCode: StatusCodes.Status403Forbidden)
+            : Ok(result.Invitations);
+    }
+
+    [HttpPost("{guildId:guid}/invitations/{characterId:guid}/accept")]
+    public async Task<IActionResult> AcceptInvitation(
+        Guid guildId,
+        Guid characterId,
+        [FromServices] ICommandHandler<AcceptGuildInvitationCommand, AcceptGuildInvitationOutcome> accept,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await accept.HandleAsync(new AcceptGuildInvitationCommand(User.GetPlayerId(), guildId, characterId), cancellationToken);
+
+        return outcome switch
+        {
+            AcceptGuildInvitationOutcome.CharacterNotOwned => Problem(
+                detail: "Ce personnage n'existe pas ou ne vous appartient pas.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            AcceptGuildInvitationOutcome.InvitationNotFound => Problem(
+                detail: "Aucune invitation en cours pour ce personnage.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            AcceptGuildInvitationOutcome.CharacterAlreadyInGuild => Problem(
+                detail: "Ce personnage appartient deja a une guilde.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            AcceptGuildInvitationOutcome.NoDefaultRank => Problem(
+                detail: "Cette guilde n'a pas de grade par defaut.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            _ => NoContent()
+        };
+    }
+
+    [HttpDelete("{guildId:guid}/invitations/{characterId:guid}")]
+    public async Task<IActionResult> DeclineInvitation(
+        Guid guildId,
+        Guid characterId,
+        [FromServices] ICommandHandler<DeclineGuildInvitationCommand, DeclineGuildInvitationOutcome> decline,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await decline.HandleAsync(new DeclineGuildInvitationCommand(User.GetPlayerId(), guildId, characterId), cancellationToken);
+
+        return outcome switch
+        {
+            DeclineGuildInvitationOutcome.Forbidden => Problem(
+                detail: "Cette invitation ne vous concerne pas.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            DeclineGuildInvitationOutcome.InvitationNotFound => Problem(
+                detail: "Aucune invitation en cours pour ce personnage.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            _ => NoContent()
+        };
+    }
 }
