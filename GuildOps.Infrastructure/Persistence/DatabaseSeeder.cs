@@ -39,7 +39,7 @@ internal static class DatabaseSeeder
         ],
         ["Tank", "Soigneur", "DPS"]),
 
-        ("World of Warcraft", 80,
+        ("World of Warcraft", 90,
         [
             "Guerrier", "Paladin", "Chasseur", "Voleur", "Prêtre",
             "Chevalier de la mort", "Chaman", "Mage", "Démoniste",
