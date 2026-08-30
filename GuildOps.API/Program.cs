@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 
+const string FrontCorsPolicy = "front";
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
@@ -33,6 +35,11 @@ builder.Services
         };
     });
 
+builder.Services.AddCors(options => options.AddPolicy(FrontCorsPolicy, policy => policy
+    .WithOrigins(builder.Configuration.GetSection("Cors:Origins").Get<string[]>() ?? [])
+    .AllowAnyHeader()
+    .AllowAnyMethod()));
+
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -55,6 +62,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors(FrontCorsPolicy);
 
 app.UseAuthentication();
 app.UseAuthorization();

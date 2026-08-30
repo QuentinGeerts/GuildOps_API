@@ -115,4 +115,20 @@ public sealed class CharactersController : ControllerBase
             _ => NoContent()
         };
     }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Delete(
+        Guid id,
+        [FromServices] ICommandHandler<DeleteCharacterCommand, DeleteCharacterOutcome> deleteCharacter,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await deleteCharacter.HandleAsync(new DeleteCharacterCommand(User.GetPlayerId(), id), cancellationToken);
+
+        return outcome == DeleteCharacterOutcome.CharacterNotFound
+            ? Problem(detail: "Ce personnage n'existe pas ou ne vous appartient pas.",
+                      statusCode: StatusCodes.Status404NotFound)
+            : NoContent();
+    }
 }

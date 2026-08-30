@@ -154,4 +154,18 @@ internal sealed class GuildRepository(ApplicationDbContext context) : IGuildRepo
                 guild.CreatedAt))
             .ToListAsync(cancellationToken);
     }
+
+    public Task<Guild?> GetGuildLedByCharacterAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => context.Set<GuildMembership>()
+            .Where(membership => membership.CharacterId == characterId && membership.Rank!.IsLeader)
+            .Select(membership => membership.Guild!)
+            .FirstOrDefaultAsync(cancellationToken);
+
+    public async Task<IReadOnlyList<Guild>> GetGuildsLedByPlayerAsync(Guid playerId, CancellationToken cancellationToken = default)
+        => await context.Set<GuildMembership>()
+            .Where(membership => membership.Character!.PlayerId == playerId && membership.Rank!.IsLeader)
+            .Select(membership => membership.Guild!)
+            .ToListAsync(cancellationToken);
+
+    public void RemoveGuild(Guild guild) => context.Guilds.Remove(guild);
 }

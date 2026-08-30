@@ -29,4 +29,10 @@ public interface IPlayerRepository
     void AddAvailability(Availability availability);
 
     void RemoveAvailability(Availability availability);
+
+    Task<Player?> GetForUpdateAsync(Guid playerId, CancellationToken cancellationToken = default);
+
+    void Remove(Player player);
+
+    void RemoveCharacter(Character character);
 }

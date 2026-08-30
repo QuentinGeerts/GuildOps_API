@@ -79,6 +79,7 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Jetons JWT porteurs (HS256) | API sans état pour un front Angular ; `sub` = `PlayerId`, durée 60 min |
 | Pas de jeton de rafraîchissement | simplification assumée : on se reconnecte à l'expiration |
 | Clé de signature dans `appsettings.Development.json` | clé de développement uniquement ; la section `Jwt` est absente d'`appsettings.json`, donc l'application refuse de démarrer hors dev sans configuration explicite |
+| Origines CORS dans la configuration | la section `Cors:Origins` n'existe que dans `appsettings.Development.json` (`localhost:4200`) ; absente ailleurs, aucune origine n'est autorisée — même logique que la section `Jwt` |
 | La commande sert de DTO de requête | DataAnnotations (BCL, pas ASP.NET) portées par la commande ; `[ApiController]` valide avant d'atteindre le handler |
 | … sauf si un champ ne doit pas venir du client | on sépare alors `XxxRequest` (lié au corps) et `XxxCommand` (construit par le Controller) — cas de `CreateCharacter`, dont le `PlayerId` vient du jeton |
 | `MapInboundClaims = false` | les claims gardent leur nom JWT (`sub`) au lieu d'être traduits en URI WS-* |
@@ -182,7 +183,9 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
 - La gestion interne d'une guilde est en place : éditer le profil, attribuer un grade, annoter et exclure un membre — les quatre droits `EditGuildProfile`, `AssignRank`, `WriteMemberNote` et `KickMember` sont actifs, validés par 14 vérifications.
 - Recherche de guildes (jeu, serveur, nom, effectif), transfert de direction et départ volontaire sont en place — validés par 14 vérifications.
-- `GuildOps.UnitTests` couvre les 19 handlers porteurs de règles : **98 tests** verts en 81 ms (`dotnet test`). Les requêtes de simple projection ne sont pas testées — elles n'ont aucune branche.
+- `DELETE /api/characters/{id}` et `DELETE /api/players/me` implémentent enfin les deux règles de suppression du modèle.
+- CORS configuré pour un front sur `localhost:4200`.
+- `GuildOps.UnitTests` couvre les 21 handlers porteurs de règles : **105 tests** verts en 81 ms (`dotnet test`). Les requêtes de simple projection ne sont pas testées — elles n'ont aucune branche.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
 - `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
@@ -191,10 +194,13 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Un front Angular — l'API couvre désormais tout le parcours
-2. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Un front Angular — l'API couvre tout le parcours, CORS compris
+2. Des tests d'intégration durables (`WebApplicationFactory`) : `Infrastructure` et `API` n'ont aucun test qui survive à la session
+3. `AddProblemDetails()` + `UseExceptionHandler()` : aujourd'hui l'imprévu sort en trace de pile
+4. Aucun `ILogger` dans les trois couches
+5. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
-Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, la gestion interne des guildes, la recherche, le transfert de direction et le départ volontaire.
+Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, la gestion interne des guildes, la recherche, le transfert de direction, le départ volontaire et les suppressions de personnage et de compte.
 
 ---
 

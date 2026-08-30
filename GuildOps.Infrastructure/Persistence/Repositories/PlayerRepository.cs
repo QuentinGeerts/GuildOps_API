@@ -53,4 +53,12 @@ internal sealed class PlayerRepository(ApplicationDbContext context) : IPlayerRe
     public void AddAvailability(Availability availability) => context.Set<Availability>().Add(availability);
 
     public void RemoveAvailability(Availability availability) => context.Set<Availability>().Remove(availability);
+
+    public Task<Player?> GetForUpdateAsync(Guid playerId, CancellationToken cancellationToken = default)
+        => context.Players
+            .FirstOrDefaultAsync(player => player.Id == playerId, cancellationToken);
+
+    public void Remove(Player player) => context.Players.Remove(player);
+
+    public void RemoveCharacter(Character character) => context.Set<Character>().Remove(character);
 }

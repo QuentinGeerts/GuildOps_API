@@ -54,4 +54,10 @@ public interface IGuildRepository
     void AddMembership(GuildMembership membership);
 
     void RemoveMembership(GuildMembership membership);
+
+    Task<Guild?> GetGuildLedByCharacterAsync(Guid characterId, CancellationToken cancellationToken = default);
+
+    Task<IReadOnlyList<Guild>> GetGuildsLedByPlayerAsync(Guid playerId, CancellationToken cancellationToken = default);
+
+    void RemoveGuild(Guild guild);
 }

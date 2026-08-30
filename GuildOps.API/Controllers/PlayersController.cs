@@ -53,4 +53,19 @@ public sealed class PlayersController : ControllerBase
         [FromServices] IQueryHandler<GetPlayerInvitationsQuery, IReadOnlyList<PlayerInvitationDto>> getInvitations,
         CancellationToken cancellationToken)
         => getInvitations.HandleAsync(new GetPlayerInvitationsQuery(User.GetPlayerId()), cancellationToken);
+
+    [HttpDelete("me")]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteMe(
+        [FromServices] ICommandHandler<DeletePlayerCommand, DeletePlayerOutcome> deletePlayer,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await deletePlayer.HandleAsync(new DeletePlayerCommand(User.GetPlayerId()), cancellationToken);
+
+        return outcome == DeletePlayerOutcome.PlayerNotFound
+            ? Problem(detail: "Ce compte n'existe plus.", statusCode: StatusCodes.Status404NotFound)
+            : NoContent();
+    }
 }

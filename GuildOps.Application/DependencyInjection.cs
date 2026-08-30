@@ -30,6 +30,8 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<CreateCharacterCommand, CreateCharacterResult>, CreateCharacterCommandHandler>();
         services.AddScoped<ICommandHandler<SetCharacterRolesCommand, SetCharacterRolesOutcome>, SetCharacterRolesCommandHandler>();
         services.AddScoped<ICommandHandler<SetCharacterAvailabilitiesCommand, SetCharacterAvailabilitiesOutcome>, SetCharacterAvailabilitiesCommandHandler>();
+        services.AddScoped<ICommandHandler<DeleteCharacterCommand, DeleteCharacterOutcome>, DeleteCharacterCommandHandler>();
+        services.AddScoped<ICommandHandler<DeletePlayerCommand, DeletePlayerOutcome>, DeletePlayerCommandHandler>();
         services.AddScoped<ICommandHandler<CreateGuildCommand, CreateGuildResult>, CreateGuildCommandHandler>();
         services.AddScoped<ICommandHandler<ApplyToGuildCommand, ApplyToGuildResult>, ApplyToGuildCommandHandler>();
         services.AddScoped<ICommandHandler<AcceptGuildApplicationCommand, AcceptGuildApplicationOutcome>, AcceptGuildApplicationCommandHandler>();
