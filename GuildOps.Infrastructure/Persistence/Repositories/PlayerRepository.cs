@@ -32,4 +32,25 @@ internal sealed class PlayerRepository(ApplicationDbContext context) : IPlayerRe
     public void Add(Player player) => context.Players.Add(player);
 
     public void AddCharacter(Character character) => context.Set<Character>().Add(character);
+
+    public Task<Character?> GetCharacterWithDetailsAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => context.Set<Character>()
+            .AsNoTracking()
+            .Include(character => character.Roles).ThenInclude(assignment => assignment.GameRole)
+            .Include(character => character.Availabilities)
+            .FirstOrDefaultAsync(character => character.Id == characterId, cancellationToken);
+
+    public Task<Character?> GetCharacterForUpdateAsync(Guid characterId, CancellationToken cancellationToken = default)
+        => context.Set<Character>()
+            .Include(character => character.Roles)
+            .Include(character => character.Availabilities)
+            .FirstOrDefaultAsync(character => character.Id == characterId, cancellationToken);
+
+    public void AddCharacterRole(CharacterGameRole assignment) => context.Set<CharacterGameRole>().Add(assignment);
+
+    public void RemoveCharacterRole(CharacterGameRole assignment) => context.Set<CharacterGameRole>().Remove(assignment);
+
+    public void AddAvailability(Availability availability) => context.Set<Availability>().Add(availability);
+
+    public void RemoveAvailability(Availability availability) => context.Set<Availability>().Remove(availability);
 }

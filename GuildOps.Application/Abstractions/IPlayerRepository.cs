@@ -12,9 +12,21 @@ public interface IPlayerRepository
 
     Task<Character?> GetCharacterAsync(Guid characterId, CancellationToken cancellationToken = default);
 
+    Task<Character?> GetCharacterWithDetailsAsync(Guid characterId, CancellationToken cancellationToken = default);
+
+    Task<Character?> GetCharacterForUpdateAsync(Guid characterId, CancellationToken cancellationToken = default);
+
     Task<Player?> GetWithCharactersAsync(Guid playerId, CancellationToken cancellationToken = default);
 
     void Add(Player player);
 
     void AddCharacter(Character character);
+
+    void AddCharacterRole(CharacterGameRole assignment);
+
+    void RemoveCharacterRole(CharacterGameRole assignment);
+
+    void AddAvailability(Availability availability);
+
+    void RemoveAvailability(Availability availability);
 }

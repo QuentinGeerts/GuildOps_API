@@ -18,7 +18,7 @@ internal sealed class CreateCharacterCommandHandler(
             return CreateCharacterResult.Rejected(CreateCharacterOutcome.PlayerNotFound);
         }
 
-        var game = await games.GetWithClassesAsync(command.GameId, cancellationToken);
+        var game = await games.GetWithClassesAndRolesAsync(command.GameId, cancellationToken);
         if (game is null)
         {
             return CreateCharacterResult.Rejected(CreateCharacterOutcome.GameNotFound);

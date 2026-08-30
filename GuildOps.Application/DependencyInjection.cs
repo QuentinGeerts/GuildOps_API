@@ -18,7 +18,7 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetGamesQuery, IReadOnlyList<GameDto>>, GetGamesQueryHandler>();
         services.AddScoped<IQueryHandler<GetGameByIdQuery, GameDetailsDto?>, GetGameByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetPlayerQuery, PlayerDto?>, GetPlayerQueryHandler>();
-        services.AddScoped<IQueryHandler<GetCharacterByIdQuery, CharacterDto?>, GetCharacterByIdQueryHandler>();
+        services.AddScoped<IQueryHandler<GetCharacterByIdQuery, CharacterDetailsDto?>, GetCharacterByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildByIdQuery, GuildDetailsDto?>, GetGuildByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildApplicationsQuery, GuildApplicationsResult>, GetGuildApplicationsQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildInvitationsQuery, GuildInvitationsResult>, GetGuildInvitationsQueryHandler>();
@@ -27,6 +27,8 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<RegisterPlayerCommand, RegisterPlayerResult>, RegisterPlayerCommandHandler>();
         services.AddScoped<ICommandHandler<LoginCommand, LoginResult>, LoginCommandHandler>();
         services.AddScoped<ICommandHandler<CreateCharacterCommand, CreateCharacterResult>, CreateCharacterCommandHandler>();
+        services.AddScoped<ICommandHandler<SetCharacterRolesCommand, SetCharacterRolesOutcome>, SetCharacterRolesCommandHandler>();
+        services.AddScoped<ICommandHandler<SetCharacterAvailabilitiesCommand, SetCharacterAvailabilitiesOutcome>, SetCharacterAvailabilitiesCommandHandler>();
         services.AddScoped<ICommandHandler<CreateGuildCommand, CreateGuildResult>, CreateGuildCommandHandler>();
         services.AddScoped<ICommandHandler<ApplyToGuildCommand, ApplyToGuildResult>, ApplyToGuildCommandHandler>();
         services.AddScoped<ICommandHandler<AcceptGuildApplicationCommand, AcceptGuildApplicationOutcome>, AcceptGuildApplicationCommandHandler>();

@@ -3,11 +3,11 @@
 namespace GuildOps.Application.Players;
 
 internal sealed class GetCharacterByIdQueryHandler(IPlayerRepository players)
-    : IQueryHandler<GetCharacterByIdQuery, CharacterDto?>
+    : IQueryHandler<GetCharacterByIdQuery, CharacterDetailsDto?>
 {
-    public async Task<CharacterDto?> HandleAsync(GetCharacterByIdQuery query, CancellationToken cancellationToken = default)
+    public async Task<CharacterDetailsDto?> HandleAsync(GetCharacterByIdQuery query, CancellationToken cancellationToken = default)
     {
-        var character = await players.GetCharacterAsync(query.Id, cancellationToken);
-        return character is null ? null : CharacterDto.From(character);
+        var character = await players.GetCharacterWithDetailsAsync(query.Id, cancellationToken);
+        return character is null ? null : CharacterDetailsDto.From(character);
     }
 }

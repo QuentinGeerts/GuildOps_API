@@ -7,7 +7,7 @@ internal sealed class GetGameByIdQueryHandler(IGameRepository repository)
 {
     public async Task<GameDetailsDto?> HandleAsync(GetGameByIdQuery query, CancellationToken cancellationToken = default)
     {
-        var game = await repository.GetWithClassesAsync(query.Id, cancellationToken);
+        var game = await repository.GetWithClassesAndRolesAsync(query.Id, cancellationToken);
         return game is null ? null : GameDetailsDto.From(game);
     }
 }

@@ -54,13 +54,65 @@ public sealed class CharactersController : ControllerBase
     [HttpGet("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CharacterDto>> GetById(
+    public async Task<ActionResult<CharacterDetailsDto>> GetById(
         Guid id,
-        [FromServices] IQueryHandler<GetCharacterByIdQuery, CharacterDto?> getCharacter,
+        [FromServices] IQueryHandler<GetCharacterByIdQuery, CharacterDetailsDto?> getCharacter,
         CancellationToken cancellationToken)
     {
         var character = await getCharacter.HandleAsync(new GetCharacterByIdQuery(id), cancellationToken);
         return character is null ? NotFound() : Ok(character);
     }
 
+
+    [HttpPut("{id:guid}/roles")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetRoles(
+        Guid id,
+        SetCharacterRolesRequest request,
+        [FromServices] ICommandHandler<SetCharacterRolesCommand, SetCharacterRolesOutcome> setRoles,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await setRoles.HandleAsync(SetCharacterRolesCommand.From(User.GetPlayerId(), id, request), cancellationToken);
+
+        return outcome switch
+        {
+            SetCharacterRolesOutcome.CharacterNotFound => Problem(
+                detail: "Ce personnage n'existe pas ou ne vous appartient pas.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            SetCharacterRolesOutcome.RoleNotInGame => Problem(
+                detail: "Un des roles demandes n'appartient pas au jeu de ce personnage.",
+                statusCode: StatusCodes.Status400BadRequest),
+
+            _ => NoContent()
+        };
+    }
+
+    [HttpPut("{id:guid}/availabilities")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetAvailabilities(
+        Guid id,
+        SetCharacterAvailabilitiesRequest request,
+        [FromServices] ICommandHandler<SetCharacterAvailabilitiesCommand, SetCharacterAvailabilitiesOutcome> setAvailabilities,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await setAvailabilities.HandleAsync(SetCharacterAvailabilitiesCommand.From(User.GetPlayerId(), id, request), cancellationToken);
+
+        return outcome switch
+        {
+            SetCharacterAvailabilitiesOutcome.CharacterNotFound => Problem(
+                detail: "Ce personnage n'existe pas ou ne vous appartient pas.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            SetCharacterAvailabilitiesOutcome.InvalidSlot => Problem(
+                detail: "Un des creneaux demandes n'est pas une valeur valide.",
+                statusCode: StatusCodes.Status400BadRequest),
+
+            _ => NoContent()
+        };
+    }
 }

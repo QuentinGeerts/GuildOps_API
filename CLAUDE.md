@@ -49,6 +49,8 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 - Un `DbSet` par racine d'agrégat uniquement (`Games`, `Players`, `Guilds`) — pas pour les entités enfants
 - Un repository par racine d'agrégat, jamais par table ; aucune méthode ne renvoie `IQueryable`
 - Les entités sans `DbSet` s'atteignent par `context.Set<T>()`, depuis le repository de leur racine d'agrégat
+- **Ne jamais insérer par mutation d'une collection de navigation** : comme l'`Id` est généré dans le constructeur, EF voit une clé renseignée, marque l'entité `Modified` au lieu d'`Added`, émet un `UPDATE` et lève une `DbUpdateConcurrencyException`. Toujours passer par un `Add` explicite du repository
+- Le remplacement d'une collection enfant se fait par différence explicite : charger l'agrégat avec suivi, puis `Add`/`Remove` sur le repository pour chaque écart
 - `SaveChanges` n'est **jamais** appelé dans un repository : c'est le rôle de `IUnitOfWork`, implémenté par le DbContext
 
 ---
@@ -81,6 +83,7 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Une invitation ne propose pas de grade | le nouveau membre reçoit le grade `IsDefault` de la guilde |
 | Les droits de guilde se vérifient par `IGuildRepository.HasPermissionAsync` | une requête traverse adhésion → personnage → grade pour répondre « ce joueur a-t-il ce droit dans cette guilde » |
 | Refuser une invitation accepte deux acteurs | l'invité décline, un gradé porteur de `InviteMember` annule — même route `DELETE`, même effet |
+| Les collections d'un personnage se remplacent en bloc | `PUT` idempotent sur `/roles` et `/availabilities` : la liste envoyée devient l'état, ce qui colle à une grille de cases à cocher |
 | Seed par `UseSeeding` / `UseAsyncSeeding` | permet d'utiliser les constructeurs du Domain, contrairement à `HasData` qui exige des valeurs figées dans la migration |
 | Migration appliquée au démarrage, en Development seulement | `services.InitializeDatabaseAsync()` — c'est aussi ce qui déclenche le seed ; hors dev, la migration reste manuelle |
 | Une violation d'index unique devient un résultat, pas une exception HTTP | `ApplicationDbContext` traduit l'erreur SQL 2601/2627 en `UniqueConstraintException` (aucune dépendance SQL dans Application), le handler en fait un `Outcome`, le Controller un code HTTP |
@@ -121,10 +124,10 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 
 `Permissions` sur `GuildRank` est une `List<GuildPermission>` : EF Core 10 la mappe seul, sans configuration, en collection primitive — un tableau JSON d'entiers dans une colonne `nvarchar(max)`.
 
-### Phase 2 — entités écrites, cas d'usage à venir
+### Phase 2 — faite
 
-Les entités de la phase 2 sont écrites et configurées : `GameRole` (par jeu), `CharacterGameRole` (n-n avec `Character`)
-et `Availability` (jour de la semaine + créneau, portée par le **personnage**). Les cas d'usage restent à écrire.
+`GameRole` (par jeu), `CharacterGameRole` (n-n avec `Character`) et `Availability` (jour de la semaine + créneau,
+portée par le **personnage**) sont écrites, configurées, migrées et pilotables par l'API.
 
 ---
 
@@ -167,6 +170,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - La base est seedée au démarrage en Development : World of Warcraft, ses 13 classes et ses 3 rôles (Tank, Soigneur, DPS).
 - Le flux candidature est complet : candidater, lister, accepter, refuser — validé par un scénario de 15 vérifications.
 - Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
+- Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
 - `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
@@ -175,11 +179,9 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Générer la migration `AddRolesAndAvailabilities` (les entités et leurs configurations sont écrites)
-2. Les cas d'usage : assigner des rôles à un personnage, déclarer ses disponibilités, les exposer en lecture
-3. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
-Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, et les flux candidature et invitation.
+Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, et les rôles et disponibilités des personnages.
 
 ---
 

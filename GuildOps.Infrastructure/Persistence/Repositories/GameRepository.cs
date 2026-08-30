@@ -12,11 +12,12 @@ internal sealed class GameRepository(ApplicationDbContext context) : IGameReposi
             .OrderBy(game => game.Name)
             .ToListAsync(cancellationToken);
 
-    public Task<Game?> GetWithClassesAsync(Guid id, CancellationToken cancellationToken = default)
+    public Task<Game?> GetWithClassesAndRolesAsync(Guid id, CancellationToken cancellationToken = default)
         => context.Games
             .AsNoTracking()
             .Include(game => game.Classes
                 .OrderBy(characterClass => characterClass.SortOrder)
                 .ThenBy(characterClass => characterClass.Name))
+            .Include(game => game.Roles.OrderBy(role => role.SortOrder))
             .FirstOrDefaultAsync(game => game.Id == id, cancellationToken);
 }
