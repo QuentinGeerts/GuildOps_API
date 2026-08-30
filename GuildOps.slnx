@@ -2,5 +2,6 @@
   <Project Path="GuildOps.Application/GuildOps.Application.csproj" />
   <Project Path="GuildOps.API/GuildOps.API.csproj" />
   <Project Path="GuildOps.Domain/GuildOps.Domain.csproj" />
+  <Project Path="GuildOps.UnitTests/GuildOps.UnitTests.csproj" />
   <Project Path="GuildOps.Infrastructure/GuildOps.Infrastructure.csproj" />
 </Solution>

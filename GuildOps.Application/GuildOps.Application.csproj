@@ -15,4 +15,8 @@
     <ProjectReference Include="..\GuildOps.Domain\GuildOps.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="GuildOps.UnitTests" />
+  </ItemGroup>
+
 </Project>
