@@ -1,4 +1,4 @@
-namespace GuildOps.Infrastructure.Authentication;
+﻿namespace GuildOps.Infrastructure.Authentication;
 
 internal interface IPasswordHasher
 {

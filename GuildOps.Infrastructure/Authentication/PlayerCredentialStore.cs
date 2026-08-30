@@ -1,4 +1,4 @@
-using GuildOps.Application.Abstractions;
+﻿using GuildOps.Application.Abstractions;
 using GuildOps.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 

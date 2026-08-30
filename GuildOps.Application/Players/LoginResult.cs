@@ -1,6 +1,4 @@
-﻿using GuildOps.Application.Abstractions;
-
-namespace GuildOps.Application.Players;
+﻿namespace GuildOps.Application.Players;
 
 public enum LoginOutcome
 {
@@ -8,9 +6,9 @@ public enum LoginOutcome
     InvalidCredentials = 2
 }
 
-public sealed record LoginResult(LoginOutcome Outcome, AccessToken? Token)
+public sealed record LoginResult(LoginOutcome Outcome, AuthTokensDto? Tokens)
 {
-    public static LoginResult Succeeded(AccessToken token) => new(LoginOutcome.Succeeded, token);
+    public static LoginResult Succeeded(AuthTokensDto tokens) => new(LoginOutcome.Succeeded, tokens);
 
     public static readonly LoginResult InvalidCredentials = new(LoginOutcome.InvalidCredentials, null);
 }

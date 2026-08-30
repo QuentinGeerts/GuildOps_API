@@ -27,6 +27,8 @@ public static class DependencyInjection
 
         services.AddScoped<ICommandHandler<RegisterPlayerCommand, RegisterPlayerResult>, RegisterPlayerCommandHandler>();
         services.AddScoped<ICommandHandler<LoginCommand, LoginResult>, LoginCommandHandler>();
+        services.AddScoped<ICommandHandler<RefreshTokensCommand, RefreshTokensResult>, RefreshTokensCommandHandler>();
+        services.AddScoped<ICommandHandler<LogoutCommand>, LogoutCommandHandler>();
         services.AddScoped<ICommandHandler<CreateCharacterCommand, CreateCharacterResult>, CreateCharacterCommandHandler>();
         services.AddScoped<ICommandHandler<SetCharacterRolesCommand, SetCharacterRolesOutcome>, SetCharacterRolesCommandHandler>();
         services.AddScoped<ICommandHandler<SetCharacterAvailabilitiesCommand, SetCharacterAvailabilitiesOutcome>, SetCharacterAvailabilitiesCommandHandler>();

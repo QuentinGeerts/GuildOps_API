@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddSingleton<IPasswordHasher, Argon2PasswordHasher>();
         services.AddSingleton<ITokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IPlayerCredentialStore, PlayerCredentialStore>();
+        services.AddScoped<IRefreshTokenStore, RefreshTokenStore>();
         return services;
     }
 }
