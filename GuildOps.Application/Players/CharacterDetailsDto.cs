@@ -11,12 +11,18 @@ public sealed record CharacterDetailsDto(
     string Server,
     int Level,
     DateTimeOffset CreatedAt,
+    Guid? GuildId,
+    string? GuildName,
+    string? RankName,
     IReadOnlyList<GameRoleDto> Roles,
     IReadOnlyList<AvailabilitySlotDto> Availabilities)
 {
     public static CharacterDetailsDto From(Character character)
         => new(character.Id, character.GameId, character.CharacterClassId,
                character.Name, character.Server, character.Level, character.CreatedAt,
+               character.Membership?.GuildId,
+               character.Membership?.Guild?.Name,
+               character.Membership?.Rank?.Name,
                [.. character.Roles.Select(assignment => GameRoleDto.From(assignment.GameRole!))
                                   .OrderBy(role => role.Name)],
                [.. character.Availabilities.OrderBy(availability => availability.Day)

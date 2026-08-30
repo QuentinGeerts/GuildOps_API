@@ -126,7 +126,7 @@ Les mots de passe sont hachés en **Argon2id** au format PHC. Les jetons de rafr
 | | Route | Droit | |
 |---|---|---|---|
 | `POST` | `/api/players` | — | créer un compte |
-| `GET` | `/api/players/me` | connecté | son profil et ses personnages |
+| `GET` | `/api/players/me` | connecté | son profil et ses personnages, avec leur guilde |
 | `GET` | `/api/players/me/invitations` | connecté | les invitations reçues |
 | `DELETE` | `/api/players/me` | connecté | supprimer son compte |
 
@@ -145,7 +145,7 @@ Toutes protégées, et limitées à ses propres personnages.
 | | Route | Droit | |
 |---|---|---|---|
 | `POST` | `/api/characters` | connecté | créer un personnage |
-| `GET` | `/api/characters/{id}` | connecté | fiche : rôles et disponibilités |
+| `GET` | `/api/characters/{id}` | connecté | fiche : guilde, grade, rôles et disponibilités |
 | `PUT` | `/api/characters/{id}/roles` | propriétaire | remplacer ses rôles |
 | `PUT` | `/api/characters/{id}/availabilities` | propriétaire | remplacer ses créneaux |
 | `DELETE` | `/api/characters/{id}` | propriétaire | supprimer le personnage |

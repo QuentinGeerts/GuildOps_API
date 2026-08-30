@@ -26,7 +26,7 @@ internal sealed class PlayerRepository(ApplicationDbContext context) : IPlayerRe
     public Task<Player?> GetWithCharactersAsync(Guid playerId, CancellationToken cancellationToken = default)
         => context.Players
             .AsNoTracking()
-            .Include(player => player.Characters)
+            .Include(player => player.Characters).ThenInclude(character => character.Membership!).ThenInclude(membership => membership.Guild)
             .FirstOrDefaultAsync(player => player.Id == playerId, cancellationToken);
 
     public void Add(Player player) => context.Players.Add(player);
@@ -38,6 +38,8 @@ internal sealed class PlayerRepository(ApplicationDbContext context) : IPlayerRe
             .AsNoTracking()
             .Include(character => character.Roles).ThenInclude(assignment => assignment.GameRole)
             .Include(character => character.Availabilities)
+            .Include(character => character.Membership!).ThenInclude(membership => membership.Guild)
+            .Include(character => character.Membership!).ThenInclude(membership => membership.Rank)
             .FirstOrDefaultAsync(character => character.Id == characterId, cancellationToken);
 
     public Task<Character?> GetCharacterForUpdateAsync(Guid characterId, CancellationToken cancellationToken = default)

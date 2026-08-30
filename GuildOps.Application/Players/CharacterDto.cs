@@ -9,9 +9,13 @@ public sealed record CharacterDto(
     string Name,
     string Server,
     int Level,
-    DateTimeOffset CreatedAt)
+    DateTimeOffset CreatedAt,
+    Guid? GuildId,
+    string? GuildName)
 {
     public static CharacterDto From(Character character)
         => new(character.Id, character.GameId, character.CharacterClassId,
-               character.Name, character.Server, character.Level, character.CreatedAt);
+               character.Name, character.Server, character.Level, character.CreatedAt,
+               character.Membership?.GuildId,
+               character.Membership?.Guild?.Name);
 }
