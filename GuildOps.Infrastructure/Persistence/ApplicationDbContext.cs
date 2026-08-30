@@ -21,4 +21,17 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     {
         configurationBuilder.Properties<string>().HaveMaxLength(256);
     }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            return await base.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException exception) when (UniqueConstraintReader.TryRead(exception, out string? constraintName))
+        {
+            throw new UniqueConstraintException(constraintName, exception);
+        }
+    }
+
 }

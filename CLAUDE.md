@@ -42,6 +42,7 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 - Un handler par cas d'usage, implémentant `IQueryHandler<TQuery, TResult>` ou `ICommandHandler<TCommand[, TResult]>` ; enregistrement explicite dans le DI, pas de scan
 - Configuration EF par `IEntityTypeConfiguration<T>` — jamais d'attributs de mapping sur les entités
 - Les conventions globales vivent dans `ConfigureConventions` du DbContext ; la seule qui change quelque chose aujourd'hui est `HaveMaxLength(256)` sur les `string` — sans elle tout part en `nvarchar(max)`, non indexable
+- Tout script SQL brut touchant `GuildRanks` doit poser `SET QUOTED_IDENTIFIER ON` (ou `sqlcmd -I`) : SQL Server l'exige pour toute écriture sur une table portant un index filtré. EF Core le fait déjà, c'est `sqlcmd` qui ne le fait pas par défaut.
 - Les dépassements du plafond de 256 sont explicités dans les configurations : `Guild.Description` 2000, `Guild.ChatUrl` 512, `GuildMembership.Note` 1000
 - **Controllers MVC**, pas de Minimal API
 - Le DbContext s'appelle `ApplicationDbContext`
@@ -68,6 +69,20 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Aucun historique d'adhésion | quitter une guilde supprime la ligne `GuildMembership`, sans trace |
 | Un joueur peut avoir des personnages sur plusieurs jeux | `GameId` est porté par `Character`, jamais par `Player` |
 | Pas de MediatR | CQRS écrit à la main : `IQueryHandler` / `ICommandHandler` dans `Application/Abstractions`, appel direct depuis le Controller |
+| Argon2id pour le hachage | *memory-hard*, recommandé par l'OWASP ; package `Konscious.Security.Cryptography.Argon2` dans Infrastructure, hash au format PHC pour pouvoir relever les paramètres plus tard |
+| Jetons JWT porteurs (HS256) | API sans état pour un front Angular ; `sub` = `PlayerId`, durée 60 min |
+| Pas de jeton de rafraîchissement | simplification assumée : on se reconnecte à l'expiration |
+| Clé de signature dans `appsettings.Development.json` | clé de développement uniquement ; la section `Jwt` est absente d'`appsettings.json`, donc l'application refuse de démarrer hors dev sans configuration explicite |
+| La commande sert de DTO de requête | DataAnnotations (BCL, pas ASP.NET) portées par la commande ; `[ApiController]` valide avant d'atteindre le handler |
+| … sauf si un champ ne doit pas venir du client | on sépare alors `XxxRequest` (lié au corps) et `XxxCommand` (construit par le Controller) — cas de `CreateCharacter`, dont le `PlayerId` vient du jeton |
+| `MapInboundClaims = false` | les claims gardent leur nom JWT (`sub`) au lieu d'être traduits en URI WS-* |
+| Grades socles à la création d'une guilde | `Chef de guilde` (tous droits, `IsLeader`), `Officier`, `Membre` (`IsDefault`) — définis dans `Application/Guilds/DefaultGuildRanks.cs` |
+| Seed par `UseSeeding` / `UseAsyncSeeding` | permet d'utiliser les constructeurs du Domain, contrairement à `HasData` qui exige des valeurs figées dans la migration |
+| Migration appliquée au démarrage, en Development seulement | `services.InitializeDatabaseAsync()` — c'est aussi ce qui déclenche le seed ; hors dev, la migration reste manuelle |
+| Une violation d'index unique devient un résultat, pas une exception HTTP | `ApplicationDbContext` traduit l'erreur SQL 2601/2627 en `UniqueConstraintException` (aucune dépendance SQL dans Application), le handler en fait un `Outcome`, le Controller un code HTTP |
+| `GameId` et `Server` d'une guilde viennent du personnage fondateur | la règle « même jeu, même serveur » devient structurelle : le client ne peut pas les fournir |
+| « Introuvable » couvre aussi « pas à vous » | même réponse pour un personnage inexistant et pour celui d'un autre joueur, afin de ne pas révéler l'existence d'un identifiant |
+| Résultat explicite plutôt qu'exception | un handler qui peut échouer renvoie un `...Result` avec un enum d'issue ; seul le Controller le traduit en code HTTP |
 
 ---
 
@@ -134,21 +149,22 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 ## État actuel
 
 - Les 8 fichiers du Domain (phase 1) sont écrits.
-- `GuildOps.Application` a `Abstractions/` (`IUnitOfWork`, `IGameRepository`, `IQueryHandler`, `ICommandHandler`) et la tranche `Games/` : DTO, requêtes, handlers.
-- `GuildOps.Infrastructure` a ses 8 `IEntityTypeConfiguration<T>`, `Persistence/Repositories/GameRepository.cs`, et un `ApplicationDbContext` qui implémente `IUnitOfWork` par simple héritage.
+- `GuildOps.Application` a `Abstractions/` et les tranches `Games/`, `Players/`, `Guilds/` : 5 requêtes et 4 commandes.
+- `GuildOps.Infrastructure` a ses 8 configurations, `Persistence/Repositories/` (Game, Player, Guild), `Persistence/DatabaseSeeder.cs`, `Authentication/` (Argon2id, JWT, credentials).
+- La base est seedée avec World of Warcraft et ses 13 classes au démarrage en Development.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
-- `GuildOps.API` a `Controllers/GamesController.cs` ; `Program.cs` compose les deux couches, expose Scalar sur `/docs`, sans authentification.
+- `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
 - Migration `InitialCreate` générée et appliquée : 8 tables, 18 index. Modèle et snapshot synchronisés.
 - La base `GuildOps` est vide de données : `GET /api/games` renvoie `[]` tant que le seed n'est pas fait.
 
 ## Prochaine étape
 
-1. Tranches suivantes : créer un joueur, créer un personnage, créer une guilde (grades socles et chef dans une seule transaction)
-2. Authentification sur `PlayerCredential` — l'entité et sa table sont déjà là
-3. Seed des jeux et des classes — repoussé volontairement, une fois la structure DB stabilisée
+1. Rejoindre une guilde existante : `GuildApplication` (candidature) et `GuildInvitation` (invitation)
+2. Phase 2 : `GameRole`, `CharacterGameRole`, `Availability`
+3. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
-Fait : les 8 `IEntityTypeConfiguration<T>`, les trois `DbSet`, la migration `InitialCreate`, et la tranche verticale `Game` de bout en bout.
+Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures `/api/games`, `/api/games/{id}`, `/api/players/me`, `/api/characters/{id}`, `/api/guilds/{id}`.
 
 ---
 
