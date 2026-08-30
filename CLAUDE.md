@@ -111,16 +111,20 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 | `Guilds/GuildApplication.cs` | `GuildId`, `CharacterId`, `Message`, `CreatedAt` |
 | `Guilds/GuildInvitation.cs` | `GuildId`, `CharacterId`, `Message`, `CreatedAt` |
 | `Guilds/GuildPermission.cs` | enum : `ViewMembers`, `InviteMember`, `ReviewApplications`, `KickMember`, `AssignRank`, `ManageRanks`, `EditGuildProfile`, `WriteMemberNote` |
+| `Games/GameRole.cs` | `GameId`, `Name`, `SortOrder`, `CreatedAt` |
+| `Players/CharacterGameRole.cs` | `CharacterId`, `GameRoleId`, `CreatedAt` |
+| `Players/Availability.cs` | `CharacterId`, `Day` (`System.DayOfWeek`), `Slot`, `CreatedAt` |
+| `Players/TimeSlot.cs` | enum : `Morning`, `Afternoon`, `Evening` |
 
 `Description` sur `Guild` est la présentation de la guilde ; `ChatUrl` est le lien Discord.
 `Note` sur `GuildMembership` est une note libre sur le membre, rédigée par les gradés habilités.
 
 `Permissions` sur `GuildRank` est une `List<GuildPermission>` : EF Core 10 la mappe seul, sans configuration, en collection primitive — un tableau JSON d'entiers dans une colonne `nvarchar(max)`.
 
-### Phase 2 — pas encore commencée
+### Phase 2 — entités écrites, cas d'usage à venir
 
-`GameRole` (tank/heal/dps, par jeu), `CharacterGameRole` (n-n avec `Character`),
-`Availability` (jour + matin/après-midi/soirée, portée par le **personnage**).
+Les entités de la phase 2 sont écrites et configurées : `GameRole` (par jeu), `CharacterGameRole` (n-n avec `Character`)
+et `Availability` (jour de la semaine + créneau, portée par le **personnage**). Les cas d'usage restent à écrire.
 
 ---
 
@@ -133,6 +137,9 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 - `UNIQUE(GuildId) WHERE IsDefault` — un seul grade par défaut
 - `UNIQUE(GuildId, Name)` et `UNIQUE(GuildId, SortOrder)` sur `GuildRank`
 - `UNIQUE(GameId, Name)` sur `CharacterClass`
+- `UNIQUE(GameId, Name)` sur `GameRole`
+- `UNIQUE(CharacterId, GameRoleId)` sur `CharacterGameRole` — un rôle assigné une seule fois
+- `UNIQUE(CharacterId, Day, Slot)` sur `Availability` — un créneau déclaré une seule fois
 - `UNIQUE(GuildId, CharacterId)` sur `GuildApplication` et sur `GuildInvitation` — une seule demande en cours par couple
 - `UNIQUE(Server, Name)` sur `Character` et sur `Guild`
 - `CHECK (Level >= 1)` sur `Character` — la borne haute (`Game.MaxLevel`) n'est pas exprimable en `CHECK` : une contrainte ne lit que sa propre ligne
@@ -157,7 +164,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les 8 fichiers du Domain (phase 1) sont écrits.
 - `GuildOps.Application` a `Abstractions/` et les tranches `Games/`, `Players/`, `Guilds/` : 5 requêtes et 4 commandes.
 - `GuildOps.Infrastructure` a ses 8 configurations, `Persistence/Repositories/` (Game, Player, Guild), `Persistence/DatabaseSeeder.cs`, `Authentication/` (Argon2id, JWT, credentials).
-- La base est seedée avec World of Warcraft et ses 13 classes au démarrage en Development.
+- La base est seedée au démarrage en Development : World of Warcraft, ses 13 classes et ses 3 rôles (Tank, Soigneur, DPS).
 - Le flux candidature est complet : candidater, lister, accepter, refuser — validé par un scénario de 15 vérifications.
 - Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
@@ -168,8 +175,9 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Phase 2 : `GameRole`, `CharacterGameRole`, `Availability`
-2. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Générer la migration `AddRolesAndAvailabilities` (les entités et leurs configurations sont écrites)
+2. Les cas d'usage : assigner des rôles à un personnage, déclarer ses disponibilités, les exposer en lecture
+3. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
 Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, et les flux candidature et invitation.
 

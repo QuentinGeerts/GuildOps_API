@@ -36,4 +36,7 @@ public sealed class Character
     public int Level { get; set; }
 
     public GuildMembership? Membership{ get; set; }
+
+    public ICollection<CharacterGameRole> Roles { get; set; } = [];
+    public ICollection<Availability> Availabilities { get; set; } = [];
 }

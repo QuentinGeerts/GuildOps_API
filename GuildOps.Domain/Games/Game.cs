@@ -19,4 +19,5 @@ public class Game
     public int MaxLevel { get; set; }
 
     public ICollection<CharacterClass> Classes { get; set; } = [];
+    public ICollection<GameRole> Roles { get; set; } = [];
 }
