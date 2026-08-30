@@ -20,11 +20,15 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetPlayerQuery, PlayerDto?>, GetPlayerQueryHandler>();
         services.AddScoped<IQueryHandler<GetCharacterByIdQuery, CharacterDto?>, GetCharacterByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildByIdQuery, GuildDetailsDto?>, GetGuildByIdQueryHandler>();
+        services.AddScoped<IQueryHandler<GetGuildApplicationsQuery, GuildApplicationsResult>, GetGuildApplicationsQueryHandler>();
 
         services.AddScoped<ICommandHandler<RegisterPlayerCommand, RegisterPlayerResult>, RegisterPlayerCommandHandler>();
         services.AddScoped<ICommandHandler<LoginCommand, LoginResult>, LoginCommandHandler>();
         services.AddScoped<ICommandHandler<CreateCharacterCommand, CreateCharacterResult>, CreateCharacterCommandHandler>();
         services.AddScoped<ICommandHandler<CreateGuildCommand, CreateGuildResult>, CreateGuildCommandHandler>();
+        services.AddScoped<ICommandHandler<ApplyToGuildCommand, ApplyToGuildResult>, ApplyToGuildCommandHandler>();
+        services.AddScoped<ICommandHandler<AcceptGuildApplicationCommand, AcceptGuildApplicationOutcome>, AcceptGuildApplicationCommandHandler>();
+        services.AddScoped<ICommandHandler<RejectGuildApplicationCommand, RejectGuildApplicationOutcome>, RejectGuildApplicationCommandHandler>();
 
         return services;
     }

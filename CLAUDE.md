@@ -77,6 +77,8 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | … sauf si un champ ne doit pas venir du client | on sépare alors `XxxRequest` (lié au corps) et `XxxCommand` (construit par le Controller) — cas de `CreateCharacter`, dont le `PlayerId` vient du jeton |
 | `MapInboundClaims = false` | les claims gardent leur nom JWT (`sub`) au lieu d'être traduits en URI WS-* |
 | Grades socles à la création d'une guilde | `Chef de guilde` (tous droits, `IsLeader`), `Officier`, `Membre` (`IsDefault`) — définis dans `Application/Guilds/DefaultGuildRanks.cs` |
+| Pas de statut sur les candidatures ni les invitations | accepter crée l'adhésion et supprime la ligne, refuser la supprime — cohérent avec « aucun historique d'adhésion » |
+| Une invitation ne propose pas de grade | le nouveau membre reçoit le grade `IsDefault` de la guilde |
 | Seed par `UseSeeding` / `UseAsyncSeeding` | permet d'utiliser les constructeurs du Domain, contrairement à `HasData` qui exige des valeurs figées dans la migration |
 | Migration appliquée au démarrage, en Development seulement | `services.InitializeDatabaseAsync()` — c'est aussi ce qui déclenche le seed ; hors dev, la migration reste manuelle |
 | Une violation d'index unique devient un résultat, pas une exception HTTP | `ApplicationDbContext` traduit l'erreur SQL 2601/2627 en `UniqueConstraintException` (aucune dépendance SQL dans Application), le handler en fait un `Outcome`, le Controller un code HTTP |
@@ -104,6 +106,8 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 | `Guilds/Guild.cs` | `GameId`, `Name`, `Server`, `Description`, `ChatUrl`, `CreatedAt`, `Ranks`, `Memberships` |
 | `Guilds/GuildRank.cs` | `GuildId`, `Name`, `SortOrder`, `Permissions` (JSON), `IsLeader`, `IsDefault`, `CreatedAt` |
 | `Guilds/GuildMembership.cs` | `GuildId`, `CharacterId`, `GuildRankId`, `Note`, `JoinedAt` |
+| `Guilds/GuildApplication.cs` | `GuildId`, `CharacterId`, `Message`, `CreatedAt` |
+| `Guilds/GuildInvitation.cs` | `GuildId`, `CharacterId`, `Message`, `CreatedAt` |
 | `Guilds/GuildPermission.cs` | enum : `ViewMembers`, `InviteMember`, `ReviewApplications`, `KickMember`, `AssignRank`, `ManageRanks`, `EditGuildProfile`, `WriteMemberNote` |
 
 `Description` sur `Guild` est la présentation de la guilde ; `ChatUrl` est le lien Discord.
@@ -114,8 +118,7 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 ### Phase 2 — pas encore commencée
 
 `GameRole` (tank/heal/dps, par jeu), `CharacterGameRole` (n-n avec `Character`),
-`Availability` (jour + matin/après-midi/soirée, portée par le **personnage**),
-`GuildApplication` (candidature) et `GuildInvitation` (invitation).
+`Availability` (jour + matin/après-midi/soirée, portée par le **personnage**).
 
 ---
 
@@ -128,6 +131,7 @@ Une guilde appartient à un jeu et à un serveur, définit ses propres **grades*
 - `UNIQUE(GuildId) WHERE IsDefault` — un seul grade par défaut
 - `UNIQUE(GuildId, Name)` et `UNIQUE(GuildId, SortOrder)` sur `GuildRank`
 - `UNIQUE(GameId, Name)` sur `CharacterClass`
+- `UNIQUE(GuildId, CharacterId)` sur `GuildApplication` et sur `GuildInvitation` — une seule demande en cours par couple
 - `UNIQUE(Server, Name)` sur `Character` et sur `Guild`
 - `CHECK (Level >= 1)` sur `Character` — la borne haute (`Game.MaxLevel`) n'est pas exprimable en `CHECK` : une contrainte ne lit que sa propre ligne
 
@@ -160,9 +164,10 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Rejoindre une guilde existante : `GuildApplication` (candidature) et `GuildInvitation` (invitation)
-2. Phase 2 : `GameRole`, `CharacterGameRole`, `Availability`
-3. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Générer la migration `AddGuildApplicationsAndInvitations` (les entités et leurs configurations sont écrites)
+2. Les cas d'usage : candidater, accepter, refuser, inviter, accepter/refuser une invitation
+3. Phase 2 : `GameRole`, `CharacterGameRole`, `Availability`
+4. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
 Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures `/api/games`, `/api/games/{id}`, `/api/players/me`, `/api/characters/{id}`, `/api/guilds/{id}`.
 
