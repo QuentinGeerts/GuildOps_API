@@ -101,4 +101,19 @@ internal sealed class GuildRepository(ApplicationDbContext context) : IGuildRepo
     public void AddInvitation(GuildInvitation invitation) => context.Set<GuildInvitation>().Add(invitation);
 
     public void RemoveInvitation(GuildInvitation invitation) => context.Set<GuildInvitation>().Remove(invitation);
+
+    public Task<Guild?> GetForUpdateAsync(Guid guildId, CancellationToken cancellationToken = default)
+        => context.Guilds
+            .FirstOrDefaultAsync(guild => guild.Id == guildId, cancellationToken);
+
+    public Task<GuildRank?> GetRankAsync(Guid guildId, Guid rankId, CancellationToken cancellationToken = default)
+        => context.Set<GuildRank>()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(rank => rank.GuildId == guildId && rank.Id == rankId, cancellationToken);
+
+    public Task<GuildMembership?> GetMembershipAsync(Guid guildId, Guid characterId, CancellationToken cancellationToken = default)
+        => context.Set<GuildMembership>()
+            .FirstOrDefaultAsync(membership => membership.GuildId == guildId && membership.CharacterId == characterId, cancellationToken);
+
+    public void RemoveMembership(GuildMembership membership) => context.Set<GuildMembership>().Remove(membership);
 }

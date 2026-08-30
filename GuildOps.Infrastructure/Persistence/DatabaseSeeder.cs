@@ -7,6 +7,13 @@ internal static class DatabaseSeeder
 {
     private static readonly (string Name, int MaxLevel, string[] Classes, string[] Roles)[] Catalogue =
     [
+        ("Guild Wars 2", 80,
+        [
+            "Gardien", "Guerrier", "Ingénieur", "Rôdeur", "Voleur",
+            "Élémentaliste", "Nécromant", "Envoûteur", "Revenant"
+        ],
+        ["Soutien", "Soigneur", "DPS"]),
+
         ("World of Warcraft", 80,
         [
             "Guerrier", "Paladin", "Chasseur", "Voleur", "Prêtre",

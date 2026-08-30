@@ -277,4 +277,118 @@ public sealed class GuildsController : ControllerBase
             _ => NoContent()
         };
     }
+
+    [HttpPut("{guildId:guid}")]
+    public async Task<IActionResult> EditProfile(
+        Guid guildId,
+        EditGuildProfileRequest request,
+        [FromServices] ICommandHandler<EditGuildProfileCommand, EditGuildProfileOutcome> edit,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await edit.HandleAsync(EditGuildProfileCommand.From(User.GetPlayerId(), guildId, request), cancellationToken);
+
+        return outcome switch
+        {
+            EditGuildProfileOutcome.Forbidden => Problem(
+                detail: "Vous n'avez pas le droit de modifier le profil de cette guilde.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            EditGuildProfileOutcome.GuildNotFound => Problem(
+                detail: "Cette guilde n'existe pas.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            EditGuildProfileOutcome.NameTakenOnServer => Problem(
+                detail: "Une guilde porte deja ce nom sur ce serveur.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            _ => NoContent()
+        };
+    }
+
+    [HttpPut("{guildId:guid}/members/{characterId:guid}/rank")]
+    public async Task<IActionResult> AssignRank(
+        Guid guildId,
+        Guid characterId,
+        AssignMemberRankRequest request,
+        [FromServices] ICommandHandler<AssignMemberRankCommand, AssignMemberRankOutcome> assign,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await assign.HandleAsync(AssignMemberRankCommand.From(User.GetPlayerId(), guildId, characterId, request), cancellationToken);
+
+        return outcome switch
+        {
+            AssignMemberRankOutcome.Forbidden => Problem(
+                detail: "Vous n'avez pas le droit d'attribuer des grades dans cette guilde.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            AssignMemberRankOutcome.RankNotInGuild => Problem(
+                detail: "Ce grade n'appartient pas a cette guilde.",
+                statusCode: StatusCodes.Status400BadRequest),
+
+            AssignMemberRankOutcome.CannotAssignLeaderRank => Problem(
+                detail: "Le grade de chef ne s'attribue pas ainsi : il faut transferer la direction.",
+                statusCode: StatusCodes.Status400BadRequest),
+
+            AssignMemberRankOutcome.CannotDemoteLeader => Problem(
+                detail: "Le chef de guilde ne peut pas changer de grade : il faut transferer la direction.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            AssignMemberRankOutcome.MembershipNotFound => Problem(
+                detail: "Ce personnage n'est pas membre de cette guilde.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            _ => NoContent()
+        };
+    }
+
+    [HttpPut("{guildId:guid}/members/{characterId:guid}/note")]
+    public async Task<IActionResult> SetMemberNote(
+        Guid guildId,
+        Guid characterId,
+        SetMemberNoteRequest request,
+        [FromServices] ICommandHandler<SetMemberNoteCommand, SetMemberNoteOutcome> setNote,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await setNote.HandleAsync(SetMemberNoteCommand.From(User.GetPlayerId(), guildId, characterId, request), cancellationToken);
+
+        return outcome switch
+        {
+            SetMemberNoteOutcome.Forbidden => Problem(
+                detail: "Vous n'avez pas le droit d'annoter les membres de cette guilde.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            SetMemberNoteOutcome.MembershipNotFound => Problem(
+                detail: "Ce personnage n'est pas membre de cette guilde.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            _ => NoContent()
+        };
+    }
+
+    [HttpDelete("{guildId:guid}/members/{characterId:guid}")]
+    public async Task<IActionResult> KickMember(
+        Guid guildId,
+        Guid characterId,
+        [FromServices] ICommandHandler<KickMemberCommand, KickMemberOutcome> kick,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await kick.HandleAsync(new KickMemberCommand(User.GetPlayerId(), guildId, characterId), cancellationToken);
+
+        return outcome switch
+        {
+            KickMemberOutcome.Forbidden => Problem(
+                detail: "Vous n'avez pas le droit d'exclure des membres de cette guilde.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            KickMemberOutcome.MembershipNotFound => Problem(
+                detail: "Ce personnage n'est pas membre de cette guilde.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            KickMemberOutcome.CannotKickLeader => Problem(
+                detail: "Le chef de guilde ne peut pas etre exclu.",
+                statusCode: StatusCodes.Status409Conflict),
+
+            _ => NoContent()
+        };
+    }
 }

@@ -153,6 +153,8 @@ portée par le **personnage**) sont écrites, configurées, migrées et pilotabl
 - La classe d'un personnage doit appartenir au **jeu de ce personnage**
 - Le grade assigné à un membre doit appartenir à **sa** guilde
 - Une guilde a toujours **exactement un** membre au grade `IsLeader` — le chef doit transférer la direction avant de partir
+- Le grade `IsLeader` ne s'attribue ni ne se retire par `AssignRank`, et le chef ne peut pas être exclu : l'index filtré garantit *au plus un* chef, jamais *au moins un*
+- Transférer la direction sera un cas d'usage à part, qui déplacera le grade des deux côtés en une transaction
 - Une guilde naît avec ses grades socles et son chef, **dans une seule transaction**
 - La borne haute de `Character.Level` : `Level <= Game.MaxLevel`
 - Supprimer le personnage qui dirige une guilde supprime la guilde, ses grades et ses adhésions
@@ -167,10 +169,11 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les 8 fichiers du Domain (phase 1) sont écrits.
 - `GuildOps.Application` a `Abstractions/` et les tranches `Games/`, `Players/`, `Guilds/` : 5 requêtes et 4 commandes.
 - `GuildOps.Infrastructure` a ses 8 configurations, `Persistence/Repositories/` (Game, Player, Guild), `Persistence/DatabaseSeeder.cs`, `Authentication/` (Argon2id, JWT, credentials).
-- La base est seedée au démarrage en Development : World of Warcraft, ses 13 classes et ses 3 rôles (Tank, Soigneur, DPS).
+- La base est seedée au démarrage en Development : Guild Wars 2 et World of Warcraft, 22 classes et 6 rôles au total.
 - Le flux candidature est complet : candidater, lister, accepter, refuser — validé par un scénario de 15 vérifications.
 - Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
 - Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
+- La gestion interne d'une guilde est en place : éditer le profil, attribuer un grade, annoter et exclure un membre — les quatre droits `EditGuildProfile`, `AssignRank`, `WriteMemberNote` et `KickMember` sont actifs, validés par 14 vérifications.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
 - `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
@@ -179,9 +182,11 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
+1. Transférer la direction d'une guilde (seul chemin légitime pour changer de chef)
+2. Rechercher des guildes : par jeu, serveur et nom, avec leur effectif
+3. Quitter volontairement une guilde
 
-Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, et les rôles et disponibilités des personnages.
+Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, et la gestion interne des guildes.
 
 ---
 

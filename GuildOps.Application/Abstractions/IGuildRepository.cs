@@ -41,4 +41,12 @@ public interface IGuildRepository
     void AddInvitation(GuildInvitation invitation);
 
     void RemoveInvitation(GuildInvitation invitation);
+
+    Task<Guild?> GetForUpdateAsync(Guid guildId, CancellationToken cancellationToken = default);
+
+    Task<GuildRank?> GetRankAsync(Guid guildId, Guid rankId, CancellationToken cancellationToken = default);
+
+    Task<GuildMembership?> GetMembershipAsync(Guid guildId, Guid characterId, CancellationToken cancellationToken = default);
+
+    void RemoveMembership(GuildMembership membership);
 }

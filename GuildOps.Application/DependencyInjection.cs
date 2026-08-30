@@ -36,6 +36,10 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<InviteCharacterCommand, InviteCharacterResult>, InviteCharacterCommandHandler>();
         services.AddScoped<ICommandHandler<AcceptGuildInvitationCommand, AcceptGuildInvitationOutcome>, AcceptGuildInvitationCommandHandler>();
         services.AddScoped<ICommandHandler<DeclineGuildInvitationCommand, DeclineGuildInvitationOutcome>, DeclineGuildInvitationCommandHandler>();
+        services.AddScoped<ICommandHandler<EditGuildProfileCommand, EditGuildProfileOutcome>, EditGuildProfileCommandHandler>();
+        services.AddScoped<ICommandHandler<AssignMemberRankCommand, AssignMemberRankOutcome>, AssignMemberRankCommandHandler>();
+        services.AddScoped<ICommandHandler<KickMemberCommand, KickMemberOutcome>, KickMemberCommandHandler>();
+        services.AddScoped<ICommandHandler<SetMemberNoteCommand, SetMemberNoteOutcome>, SetMemberNoteCommandHandler>();
 
         return services;
     }
