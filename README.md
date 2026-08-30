@@ -14,7 +14,9 @@ Projet personnel d'apprentissage de la **Clean Architecture** en ASP.NET Core 10
 dotnet run --project GuildOps.API
 ```
 
-C'est tout. En environnement `Development`, l'application applique les migrations et alimente la base au démarrage — Guild Wars 2 et World of Warcraft, leurs 22 classes et leurs 6 rôles.
+C'est tout. En environnement `Development`, l'application applique les migrations et alimente la base au démarrage : Dofus, Final Fantasy XIV, Guild Wars 2 et World of Warcraft, avec leurs 63 classes et leurs 15 rôles.
+
+Le seed est **additif** : il ne crée que les jeux absents. Pour en ajouter un, il suffit d'étoffer `DatabaseSeeder.Catalogue` et de relancer l'application.
 
 La documentation interactive des endpoints est ensuite disponible sur **`/docs`** (Scalar), où l'on peut aussi coller son jeton pour appeler les routes protégées.
 

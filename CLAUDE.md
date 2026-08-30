@@ -96,6 +96,7 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Un modèle de lecture peut sortir du repository sous forme de DTO | `SearchAsync` projette en SQL, effectif compris ; passer par les entités obligerait à charger toutes les adhésions pour n'en garder que le nombre |
 | Les collections d'un personnage se remplacent en bloc | `PUT` idempotent sur `/roles` et `/availabilities` : la liste envoyée devient l'état, ce qui colle à une grille de cases à cocher |
 | Seed par `UseSeeding` / `UseAsyncSeeding` | permet d'utiliser les constructeurs du Domain, contrairement à `HasData` qui exige des valeurs figées dans la migration |
+| Le seed est additif, jamais destructif | il n'ajoute que les jeux absents par leur nom : étoffer `DatabaseSeeder.Catalogue` suffit, sans purger la base |
 | Migration appliquée au démarrage, en Development seulement | `services.InitializeDatabaseAsync()` — c'est aussi ce qui déclenche le seed ; hors dev, la migration reste manuelle |
 | Une violation d'index unique devient un résultat, pas une exception HTTP | `ApplicationDbContext` traduit l'erreur SQL 2601/2627 en `UniqueConstraintException` (aucune dépendance SQL dans Application), le handler en fait un `Outcome`, le Controller un code HTTP |
 | `GameId` et `Server` d'une guilde viennent du personnage fondateur | la règle « même jeu, même serveur » devient structurelle : le client ne peut pas les fournir |
@@ -180,7 +181,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Les 8 fichiers du Domain (phase 1) sont écrits.
 - `GuildOps.Application` a `Abstractions/` et les tranches `Games/`, `Players/`, `Guilds/` : 5 requêtes et 4 commandes.
 - `GuildOps.Infrastructure` a ses 8 configurations, `Persistence/Repositories/` (Game, Player, Guild), `Persistence/DatabaseSeeder.cs`, `Authentication/` (Argon2id, JWT, credentials).
-- La base est seedée au démarrage en Development : Guild Wars 2 et World of Warcraft, 22 classes et 6 rôles au total.
+- La base est seedée au démarrage en Development : 4 jeux (Dofus, Final Fantasy XIV, Guild Wars 2, World of Warcraft), 63 classes et 15 rôles.
 - Le flux candidature est complet : candidater, lister, accepter, refuser — validé par un scénario de 15 vérifications.
 - Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
 - Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
@@ -203,7 +204,6 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 3. Des tests d'intégration durables (`WebApplicationFactory`) : `Infrastructure` et `API` n'ont aucun test qui survive à la session
 4. `AddProblemDetails()` + `UseExceptionHandler()` : aujourd'hui l'imprévu sort en trace de pile
 5. Aucun `ILogger` dans les trois couches
-6. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
 Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, la gestion interne des guildes, la recherche, le transfert de direction, le départ volontaire et les suppressions de personnage et de compte. Jetons de rafraîchissement avec rotation.
 
