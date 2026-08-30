@@ -22,6 +22,7 @@ public static class DependencyInjection
         services.AddScoped<IQueryHandler<GetGuildByIdQuery, GuildDetailsDto?>, GetGuildByIdQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildApplicationsQuery, GuildApplicationsResult>, GetGuildApplicationsQueryHandler>();
         services.AddScoped<IQueryHandler<GetGuildInvitationsQuery, GuildInvitationsResult>, GetGuildInvitationsQueryHandler>();
+        services.AddScoped<IQueryHandler<SearchGuildsQuery, IReadOnlyList<GuildSummaryDto>>, SearchGuildsQueryHandler>();
         services.AddScoped<IQueryHandler<GetPlayerInvitationsQuery, IReadOnlyList<PlayerInvitationDto>>, GetPlayerInvitationsQueryHandler>();
 
         services.AddScoped<ICommandHandler<RegisterPlayerCommand, RegisterPlayerResult>, RegisterPlayerCommandHandler>();
@@ -40,6 +41,7 @@ public static class DependencyInjection
         services.AddScoped<ICommandHandler<AssignMemberRankCommand, AssignMemberRankOutcome>, AssignMemberRankCommandHandler>();
         services.AddScoped<ICommandHandler<KickMemberCommand, KickMemberOutcome>, KickMemberCommandHandler>();
         services.AddScoped<ICommandHandler<SetMemberNoteCommand, SetMemberNoteOutcome>, SetMemberNoteCommandHandler>();
+        services.AddScoped<ICommandHandler<TransferLeadershipCommand, TransferLeadershipOutcome>, TransferLeadershipCommandHandler>();
 
         return services;
     }

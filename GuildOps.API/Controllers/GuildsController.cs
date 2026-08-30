@@ -377,7 +377,7 @@ public sealed class GuildsController : ControllerBase
         return outcome switch
         {
             KickMemberOutcome.Forbidden => Problem(
-                detail: "Vous n'avez pas le droit d'exclure des membres de cette guilde.",
+                detail: "Vous n'avez pas le droit de retirer ce membre de la guilde.",
                 statusCode: StatusCodes.Status403Forbidden),
 
             KickMemberOutcome.MembershipNotFound => Problem(
@@ -385,8 +385,44 @@ public sealed class GuildsController : ControllerBase
                 statusCode: StatusCodes.Status404NotFound),
 
             KickMemberOutcome.CannotKickLeader => Problem(
-                detail: "Le chef de guilde ne peut pas etre exclu.",
+                detail: "Le chef de guilde ne peut ni partir ni etre exclu : il doit d'abord transferer la direction.",
                 statusCode: StatusCodes.Status409Conflict),
+
+            _ => NoContent()
+        };
+    }
+
+    [HttpGet]
+    public Task<IReadOnlyList<GuildSummaryDto>> Search(
+        [FromQuery] Guid? gameId,
+        [FromQuery] string? server,
+        [FromQuery] string? name,
+        [FromServices] IQueryHandler<SearchGuildsQuery, IReadOnlyList<GuildSummaryDto>> search,
+        CancellationToken cancellationToken)
+        => search.HandleAsync(new SearchGuildsQuery(gameId, server, name), cancellationToken);
+
+    [HttpPut("{guildId:guid}/leader/{characterId:guid}")]
+    public async Task<IActionResult> TransferLeadership(
+        Guid guildId,
+        Guid characterId,
+        [FromServices] ICommandHandler<TransferLeadershipCommand, TransferLeadershipOutcome> transfer,
+        CancellationToken cancellationToken)
+    {
+        var outcome = await transfer.HandleAsync(new TransferLeadershipCommand(User.GetPlayerId(), guildId, characterId), cancellationToken);
+
+        return outcome switch
+        {
+            TransferLeadershipOutcome.NotLeader => Problem(
+                detail: "Seul le chef de guilde peut transferer la direction.",
+                statusCode: StatusCodes.Status403Forbidden),
+
+            TransferLeadershipOutcome.MembershipNotFound => Problem(
+                detail: "Ce personnage n'est pas membre de cette guilde.",
+                statusCode: StatusCodes.Status404NotFound),
+
+            TransferLeadershipOutcome.AlreadyLeader => Problem(
+                detail: "Ce personnage dirige deja la guilde.",
+                statusCode: StatusCodes.Status400BadRequest),
 
             _ => NoContent()
         };

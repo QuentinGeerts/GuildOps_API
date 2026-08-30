@@ -1,4 +1,5 @@
 ﻿using GuildOps.Application.Abstractions;
+using GuildOps.Application.Guilds;
 using GuildOps.Domain.Guilds;
 using Microsoft.EntityFrameworkCore;
 
@@ -116,4 +117,41 @@ internal sealed class GuildRepository(ApplicationDbContext context) : IGuildRepo
             .FirstOrDefaultAsync(membership => membership.GuildId == guildId && membership.CharacterId == characterId, cancellationToken);
 
     public void RemoveMembership(GuildMembership membership) => context.Set<GuildMembership>().Remove(membership);
+
+    public Task<GuildMembership?> GetLeaderMembershipAsync(Guid guildId, CancellationToken cancellationToken = default)
+        => context.Set<GuildMembership>()
+            .Include(membership => membership.Character)
+            .FirstOrDefaultAsync(membership => membership.GuildId == guildId && membership.Rank!.IsLeader, cancellationToken);
+
+    public async Task<IReadOnlyList<GuildSummaryDto>> SearchAsync(Guid? gameId, string? server, string? name, CancellationToken cancellationToken = default)
+    {
+        IQueryable<Guild> query = context.Guilds.AsNoTracking();
+
+        if (gameId is not null)
+        {
+            query = query.Where(guild => guild.GameId == gameId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(server))
+        {
+            query = query.Where(guild => guild.Server == server);
+        }
+
+        if (!string.IsNullOrWhiteSpace(name))
+        {
+            query = query.Where(guild => guild.Name.Contains(name));
+        }
+
+        return await query
+            .OrderBy(guild => guild.Name)
+            .Select(guild => new GuildSummaryDto(
+                guild.Id,
+                guild.GameId,
+                guild.Name,
+                guild.Server,
+                guild.Description,
+                guild.Memberships.Count,
+                guild.CreatedAt))
+            .ToListAsync(cancellationToken);
+    }
 }

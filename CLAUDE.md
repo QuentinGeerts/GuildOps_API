@@ -83,6 +83,9 @@ Chaque couche expose un `DependencyInjection.cs` avec sa méthode d'extension ; 
 | Une invitation ne propose pas de grade | le nouveau membre reçoit le grade `IsDefault` de la guilde |
 | Les droits de guilde se vérifient par `IGuildRepository.HasPermissionAsync` | une requête traverse adhésion → personnage → grade pour répondre « ce joueur a-t-il ce droit dans cette guilde » |
 | Refuser une invitation accepte deux acteurs | l'invité décline, un gradé porteur de `InviteMember` annule — même route `DELETE`, même effet |
+| Le transfert de direction est un échange de grades | le successeur prend `IsLeader`, l'ancien chef hérite du grade du successeur : la direction n'est jamais vacante, et l'index filtré portant sur les *grades* n'est pas sollicité |
+| `DELETE .../members/{characterId}` sert à deux acteurs | le membre qui part de lui-même, ou un gradé porteur de `KickMember` — même motif que le refus d'invitation |
+| Un modèle de lecture peut sortir du repository sous forme de DTO | `SearchAsync` projette en SQL, effectif compris ; passer par les entités obligerait à charger toutes les adhésions pour n'en garder que le nombre |
 | Les collections d'un personnage se remplacent en bloc | `PUT` idempotent sur `/roles` et `/availabilities` : la liste envoyée devient l'état, ce qui colle à une grille de cases à cocher |
 | Seed par `UseSeeding` / `UseAsyncSeeding` | permet d'utiliser les constructeurs du Domain, contrairement à `HasData` qui exige des valeurs figées dans la migration |
 | Migration appliquée au démarrage, en Development seulement | `services.InitializeDatabaseAsync()` — c'est aussi ce qui déclenche le seed ; hors dev, la migration reste manuelle |
@@ -174,6 +177,7 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 - Le flux invitation est complet : inviter, lister des deux côtés, accepter, décliner ou annuler — validé par un scénario de 19 vérifications.
 - Les rôles et les disponibilités d'un personnage sont pilotables : `PUT /api/characters/{id}/roles` et `/availabilities`, exposés sur la fiche — validé par un scénario de 12 vérifications.
 - La gestion interne d'une guilde est en place : éditer le profil, attribuer un grade, annoter et exclure un membre — les quatre droits `EditGuildProfile`, `AssignRank`, `WriteMemberNote` et `KickMember` sont actifs, validés par 14 vérifications.
+- Recherche de guildes (jeu, serveur, nom, effectif), transfert de direction et départ volontaire sont en place — validés par 14 vérifications.
 - `PlayerCredential` vit dans `Infrastructure/Authentication/`, avec sa configuration : `UNIQUE(Email)`, `UNIQUE(PlayerId)`, cascade depuis `Player`.
 - `GuildOps.API` a `Controllers/` (`Games`, `Players`, `Auth`, `Characters`, `Guilds`) et `Extensions/ClaimsPrincipalExtensions.cs` ; `Program.cs` compose les deux couches, valide les jetons JWT, expose Scalar sur `/docs`.
 - Le schéma a été validé sur une base jetable : les 9 contraintes se déclenchent, les deux index filtrés fonctionnent, aucun conflit de chemin de cascade (pas d'erreur 1785).
@@ -182,11 +186,11 @@ Principe général : *invariant interne à une entité → l'entité ou le handl
 
 ## Prochaine étape
 
-1. Transférer la direction d'une guilde (seul chemin légitime pour changer de chef)
-2. Rechercher des guildes : par jeu, serveur et nom, avec leur effectif
-3. Quitter volontairement une guilde
+1. Un front Angular — l'API couvre désormais tout le parcours
+2. Des tests automatisés dans le dépôt : les quatre scénarios n'existent aujourd'hui que hors du projet
+3. Compléter le seed avec d'autres jeux (`DatabaseSeeder.Catalogue`)
 
-Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, et la gestion interne des guildes.
+Fait : le schéma complet et sa migration, le seed, l'inscription (Argon2id), la connexion (JWT), la création de personnage et de guilde, les lectures, les flux candidature et invitation, les rôles et disponibilités des personnages, la gestion interne des guildes, la recherche, le transfert de direction et le départ volontaire.
 
 ---
 
